@@ -6,39 +6,47 @@
 <meta name="robots" content="noindex, nofollow">
 <title>港股监控站</title>
 <style>
-  body { font-family: system-ui, "Microsoft YaHei", sans-serif; background:#0f1419; color:#e6e6e6;
-         margin:0; padding:40px 16px; }
-  h1 { font-size:22px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; max-width:900px; }
-  .card { display:block; background:#161b22; border:1px solid #30363d; border-radius:10px;
-          padding:20px; text-decoration:none; color:inherit; transition:border-color .15s; }
-  .card:hover { border-color:#58a6ff; }
-  .t { font-size:17px; font-weight:600; margin-bottom:6px; }
-  .d { font-size:13px; color:#8b949e; }
-  .m { font-size:12px; color:#6e7681; margin-top:12px; }
-  .foot { margin-top:32px; font-size:12px; color:#6e7681; max-width:900px; line-height:1.7; }
+html,body{margin:0;height:100%}
+body{background:#0d1117;color:#e6edf3;font-family:system-ui,"Microsoft YaHei",sans-serif}
+header{position:fixed;top:0;left:0;right:0;height:52px;background:#0d1117;border-bottom:1px solid #30363d;
+display:flex;align-items:stretch;gap:6px;padding:0 12px;overflow-x:auto;z-index:9}
+.brand{display:flex;align-items:center;font-weight:600;font-size:15px;margin-right:8px;white-space:nowrap}
+.tab{border:none;background:none;color:#8b949e;font-size:14px;font-family:inherit;cursor:pointer;
+padding:6px 14px;border-radius:8px;margin:8px 0;display:flex;flex-direction:column;justify-content:center;
+line-height:1.35;white-space:nowrap}
+.tab:hover{color:#e6edf3;background:#161b22}
+.tab.active{color:#e6edf3;background:#161b22}
+.tab .ts{font-size:10px;color:#6e7681}
+.hint{display:flex;align-items:center;margin-left:auto;font-size:11px;color:#6e7681;white-space:nowrap;padding-right:4px}
+.frame{border:none;width:100%;height:calc(100vh - 52px);margin-top:52px;display:none;background:#fff}
+.frame.active{display:block}
 </style>
 </head>
 <body>
-<h1>港股监控站</h1>
-<div class="grid">
-<a class="card" href="./di.html">
-  <div class="t">披露权益监控</div>
-  <div class="d">自选股披露权益变动每日提示</div>
-  <div class="m">更新于 2026-09-29 05:07</div>
-</a>
-<a class="card" href="./ann.html">
-  <div class="t">最新公告</div>
-  <div class="d">自选股披露易最新公告</div>
-  <div class="m">更新于 2026-09-29 09:35</div>
-</a>
-<a class="card" href="./southbound.html">
-  <div class="t">南向资金看板</div>
-  <div class="d">17项指标+洋葱策略信号</div>
-  <div class="m">更新于 2026-09-29 19:42</div>
-</a>
-</div>
-<div class="foot">数据仅供个人研究使用, 不构成投资建议。每日 09:45 自动更新并发布。<br>
-若某页显示旧数据, 大概率是当日抓取源休市/失败, 参考页面内更新时间。</div>
+<header>
+<span class="brand">监控站</span>
+<button class="tab active" data-f="di.html" title="自选股披露权益变动每日提示">披露权益监控<span class="ts">09-29 05:07</span></button>
+<button class="tab" data-f="ann.html" title="自选股披露易最新公告">最新公告<span class="ts">09-29 09:35</span></button>
+<button class="tab" data-f="southbound.html" title="17项指标+洋葱策略信号">南向资金看板<span class="ts">09-29 20:05</span></button>
+<span class="hint">每日 09:45 自动更新 · 仅供个人研究</span>
+</header>
+<main>
+<iframe id="frame-di.html" class="frame active" src="di.html"></iframe>
+<iframe id="frame-ann.html" class="frame" data-src="ann.html"></iframe>
+<iframe id="frame-southbound.html" class="frame" data-src="southbound.html"></iframe>
+</main>
+<script>
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+    document.querySelectorAll('.frame').forEach(function(x){x.classList.remove('active')});
+    t.classList.add('active');
+    var f = document.getElementById('frame-' + t.dataset.f);
+    var lazy = f.getAttribute('data-src');
+    if (lazy) { f.src = lazy; f.removeAttribute('data-src'); }
+    f.classList.add('active');
+  });
+});
+</script>
 </body>
 </html>
