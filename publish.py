@@ -31,6 +31,21 @@ def run(cmd, **kw):
     return r.returncode, (r.stdout or '') + (r.stderr or '')
 
 
+def inject_noindex(path):
+    """往页面 <head> 注入 noindex, 避免被搜索引擎收录(自选股数据不外泄到搜索结果)"""
+    with open(path, 'r', encoding='utf-8') as f:
+        html = f.read()
+    tag = '<meta name="robots" content="noindex, nofollow">'
+    if tag in html:
+        return
+    head = html.find('<head>')
+    if head == -1:
+        return
+    at = head + len('<head>')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(html[:at] + '\n' + tag + html[at:])
+
+
 def build_index():
     cards = []
     for src, fname, name, desc in PAGES:
@@ -87,6 +102,7 @@ def main():
         s = os.path.join(src, 'index.html')
         if os.path.exists(s):
             shutil.copyfile(s, os.path.join(HERE, fname))
+            inject_noindex(os.path.join(HERE, fname))
             print(f'copied {name}: {s} -> {fname}')
         else:
             print(f'!! 缺源文件, 跳过: {s}')
