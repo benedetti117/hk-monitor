@@ -15,13 +15,15 @@ import datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# (源目录, 源文件名, 目标文件名, 页面中文名, 简介) — 顺序即tab顺序, 第一项为默认首页
+# (源目录, 源文件名, 目标文件名, 页面中文名, 简介, 变体) — 顺序即tab顺序, 第一项为默认首页
+# 变体: None=原样; 'ann'/'bb'=hkex_ann源页强制进公告/回购内页并隐藏内部tab条
 PAGES = [
-    (r'D:\AI research\每日复盘\input',     'review.html',    'review.html',  '每日复盘',     '复盘报告+邮件纪要合成阅读页'),
-    (r'D:\AI research\hkex_di_monitor',    'index.html',     'di.html',      '披露权益监控', '自选股披露权益变动每日提示'),
-    (r'D:\AI research\hkex_ann',           'index.html',     'ann.html',     '最新公告',     '自选股披露易最新公告'),
-    (r'D:\AI research\southbound_monitor', 'index.html',     'southbound.html','南向资金看板', '17项指标+洋葱策略信号'),
-    (r'D:\AI research\hkex_short',         'index.html',     'short.html',   '沽空监控',     '港股自选池每日沽空占比+趋势图'),
+    (r'D:\AI research\每日复盘\input',     'review.html',    'review.html',  '每日复盘',     '复盘报告+邮件纪要合成阅读页', None),
+    (r'D:\AI research\hkex_di_monitor',    'index.html',     'di.html',      '披露权益监控', '自选股披露权益变动每日提示', None),
+    (r'D:\AI research\hkex_ann',           'index.html',     'ann.html',     '最新公告',     '自选股披露易最新公告', 'ann'),
+    (r'D:\AI research\hkex_ann',           'index.html',     'bb.html',      '回购速览',     '自选股回购公告速览(SRRPT)', 'bb'),
+    (r'D:\AI research\southbound_monitor', 'index.html',     'southbound.html','南向资金看板', '17项指标+洋葱策略信号', None),
+    (r'D:\AI research\hkex_short',         'index.html',     'short.html',   '沽空监控',     '港股自选池每日沽空占比+趋势图', None),
 ]
 
 SITE_NAME = '监控站'
@@ -47,6 +49,28 @@ def inject_noindex(path):
     at = head + len('<head>')
     with open(path, 'w', encoding='utf-8') as f:
         f.write(html[:at] + '\n' + tag + html[at:])
+
+
+def apply_ann_variant(path, variant):
+    """hkex_ann 源页变体: 隐藏内部"最新公告|回购速览"tab条, 强制进指定内页并锁死。
+    variant='ann' 公告页 / 'bb' 回购页。只改发布副本, 源文件不动。"""
+    with open(path, 'r', encoding='utf-8') as f:
+        html = f.read()
+    want = 'true' if variant == 'bb' else 'false'
+    inject = ('<style>.tabs{display:none!important}</style>\n'
+              '<script>window.addEventListener(\'DOMContentLoaded\',function(){\n'
+              'function lock(){try{setTab(' + want + ')}catch(e){setTimeout(lock,50)}}\n'
+              'lock();\n'
+              'var a=document.getElementById(\'tab-ann\'),b=document.getElementById(\'tab-bb\');\n'
+              'if(a)a.onclick=function(){setTab(' + want + ')};\n'
+              'if(b)b.onclick=function(){setTab(' + want + ')};\n'
+              '});</script>')
+    at = html.find('</head>')
+    if at == -1:
+        return
+    out = html[:at] + inject + '\n' + html[at:]
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(out)
 
 
 TPL = '''<!DOCTYPE html>
@@ -104,7 +128,7 @@ def build_index():
     tab_btns = []
     frames = []
     first_done = False
-    for src, sname, fname, name, desc in PAGES:
+    for src, sname, fname, name, desc, variant in PAGES:
         s = os.path.join(src, sname)
         if not os.path.exists(s):
             print(f'!! 缺 {s}, 该页跳过')
@@ -132,11 +156,13 @@ def build_index():
 
 def main():
     check_only = '--check' in sys.argv
-    for src, sname, fname, name, desc in PAGES:
+    for src, sname, fname, name, desc, variant in PAGES:
         s = os.path.join(src, sname)
         if os.path.exists(s):
             shutil.copyfile(s, os.path.join(HERE, fname))
             inject_noindex(os.path.join(HERE, fname))
+            if variant:
+                apply_ann_variant(os.path.join(HERE, fname), variant)
             print(f'copied {name}: {s} -> {fname}')
         else:
             print(f'!! 缺源文件, 跳过: {s}')

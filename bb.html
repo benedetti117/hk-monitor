@@ -110,11 +110,11 @@ tr.hist>td.num{color:var(--txt)}
 </style>
 <style>.tabs{display:none!important}</style>
 <script>window.addEventListener('DOMContentLoaded',function(){
-function lock(){try{setTab(false)}catch(e){setTimeout(lock,50)}}
+function lock(){try{setTab(true)}catch(e){setTimeout(lock,50)}}
 lock();
 var a=document.getElementById('tab-ann'),b=document.getElementById('tab-bb');
-if(a)a.onclick=function(){setTab(false)};
-if(b)b.onclick=function(){setTab(false)};
+if(a)a.onclick=function(){setTab(true)};
+if(b)b.onclick=function(){setTab(true)};
 });</script>
 </head>
 <body>
