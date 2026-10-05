@@ -15,14 +15,16 @@ import datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# (源目录, 目标文件名, 页面中文名, 简介)
+# (源目录, 源文件名, 目标文件名, 页面中文名, 简介) — 顺序即tab顺序, 第一项为默认首页
 PAGES = [
-    (r'D:\AI research\hkex_di_monitor',    'di.html',        '披露权益监控', '自选股披露权益变动每日提示'),
-    (r'D:\AI research\hkex_ann',           'ann.html',       '最新公告',     '自选股披露易最新公告'),
-    (r'D:\AI research\southbound_monitor', 'southbound.html','南向资金看板', '17项指标+洋葱策略信号'),
+    (r'D:\AI research\每日复盘\input',     'review.html',    'review.html',  '每日复盘',     '复盘报告+邮件纪要合成阅读页'),
+    (r'D:\AI research\hkex_di_monitor',    'index.html',     'di.html',      '披露权益监控', '自选股披露权益变动每日提示'),
+    (r'D:\AI research\hkex_ann',           'index.html',     'ann.html',     '最新公告',     '自选股披露易最新公告'),
+    (r'D:\AI research\southbound_monitor', 'index.html',     'southbound.html','南向资金看板', '17项指标+洋葱策略信号'),
+    (r'D:\AI research\hkex_short',         'index.html',     'short.html',   '沽空监控',     '港股自选池每日沽空占比+趋势图'),
 ]
 
-SITE_NAME = '港股监控站'
+SITE_NAME = '监控站'
 
 
 def run(cmd, **kw):
@@ -102,8 +104,8 @@ def build_index():
     tab_btns = []
     frames = []
     first_done = False
-    for src, fname, name, desc in PAGES:
-        s = os.path.join(src, 'index.html')
+    for src, sname, fname, name, desc in PAGES:
+        s = os.path.join(src, sname)
         if not os.path.exists(s):
             print(f'!! 缺 {s}, 该页跳过')
             continue
@@ -130,8 +132,8 @@ def build_index():
 
 def main():
     check_only = '--check' in sys.argv
-    for src, fname, name, desc in PAGES:
-        s = os.path.join(src, 'index.html')
+    for src, sname, fname, name, desc in PAGES:
+        s = os.path.join(src, sname)
         if os.path.exists(s):
             shutil.copyfile(s, os.path.join(HERE, fname))
             inject_noindex(os.path.join(HERE, fname))
