@@ -19,10 +19,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # 变体: None=原样; 'ann'/'bb'=hkex_ann源页强制进公告/回购内页并隐藏内部tab条
 PAGES = [
     (r'D:\AI research\每日复盘\input',     'review.html',    'review.html',  '每日复盘',     '复盘报告+邮件纪要合成阅读页', None),
+    (r'D:\AI research\southbound_monitor', 'index.html',     'southbound.html','南向资金看板', '17项指标+洋葱策略信号', None),
     (r'D:\AI research\hkex_di_monitor',    'index.html',     'di.html',      '披露权益监控', '自选股披露权益变动每日提示', None),
     (r'D:\AI research\hkex_ann',           'index.html',     'ann.html',     '最新公告',     '自选股披露易最新公告', 'ann'),
     (r'D:\AI research\hkex_ann',           'index.html',     'bb.html',      '回购速览',     '自选股回购公告速览(SRRPT)', 'bb'),
-    (r'D:\AI research\southbound_monitor', 'index.html',     'southbound.html','南向资金看板', '17项指标+洋葱策略信号', None),
     (r'D:\AI research\hkex_short',         'index.html',     'short.html',   '沽空监控',     '港股自选池每日沽空占比+趋势图', None),
 ]
 
