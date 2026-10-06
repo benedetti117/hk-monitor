@@ -76,14 +76,18 @@ def git_publish():
         return True
     ts = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     for cmd in ('git add -A',
-                'git commit -m "auto: update ' + ts + '"',
-                'git push origin main'):
+                'git commit -m "auto: update ' + ts + '"'):
         rc, out = publish.run(cmd)
         print(f'$ {cmd} -> {out.strip().splitlines()[0] if out.strip() else "ok"}')
-        if rc != 0 and 'nothing to commit' not in out and 'push' not in cmd:
-            print(f'!! git 失败: {out[:300]}')
-            return False
-    return True
+    # push 网络易抖, 重试3次
+    import time
+    for attempt in range(3):
+        rc, out = publish.run('git push origin main')
+        print(f'$ git push origin main -> {out.strip().splitlines()[0] if out.strip() else "ok"}')
+        if rc == 0:
+            break
+        time.sleep(10)
+    return rc == 0
 
 
 def main():
