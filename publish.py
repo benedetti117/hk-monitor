@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 监控网站一键发布脚本
-把三个监控项目的 index.html 复制到本仓库(改名, 注入noindex),
-生成合并版首页(顶部tab切换 + iframe懒加载), git commit + push 到 GitHub Pages。
+把监控项目的页面复制到本仓库(改名, 注入noindex),
+生成合并版首页(顶部tab切换 + iframe懒加载), git commit + push 到 GitHub Pages;
+另生成 offline.html 离线单文件版(全部子页 srcdoc 内嵌, 供飞书推送下载离线看)。
 用法:
   python publish.py            # 正常发布
   python publish.py --check    # 只本地生成文件, 不 commit 不 push
@@ -58,6 +59,12 @@ def apply_ann_variant(path, variant):
     with open(path, 'r', encoding='utf-8') as f:
         html = f.read()
     want = 'true' if variant == 'bb' else 'false'
+    if variant == 'bb':
+        # 回购副本: 页面标题从"最新公告"换成"回购速览" (仅改发布副本)
+        html = html.replace('<title>港股自选股 · 最新公告</title>',
+                            '<title>港股自选股 · 回购速览</title>')
+        html = html.replace('港股自选股 · 最新公告</h1>',
+                            '港股自选股 · 回购速览</h1>')
     inject = ('<style>.tabs{display:none!important}</style>\n'
               '<script>window.addEventListener(\'DOMContentLoaded\',function(){\n'
               'function lock(){try{setTab(' + want + ')}catch(e){setTimeout(lock,50)}}\n'
@@ -72,6 +79,93 @@ def apply_ann_variant(path, variant):
     out = html[:at] + inject + '\n' + html[at:]
     with open(path, 'w', encoding='utf-8') as f:
         f.write(out)
+
+
+TPL_OFFLINE = '''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!--TITLE--> (离线单文件版)</title>
+<style>
+html,body{margin:0;height:100%}
+body{background:#0d1117;color:#e6edf3;font-family:system-ui,"Microsoft YaHei",sans-serif}
+header{position:fixed;top:0;left:0;right:0;height:52px;background:#0d1117;border-bottom:1px solid #30363d;
+display:flex;align-items:stretch;gap:6px;padding:0 12px;overflow-x:auto;z-index:9}
+.brand{display:flex;align-items:center;font-weight:600;font-size:15px;margin-right:8px;white-space:nowrap}
+.tab{border:none;background:none;color:#8b949e;font-size:14px;font-family:inherit;cursor:pointer;
+padding:6px 14px;border-radius:8px;margin:8px 0;display:flex;flex-direction:column;justify-content:center;
+line-height:1.35;white-space:nowrap}
+.tab:hover{color:#e6edf3;background:#161b22}
+.tab.active{color:#e6edf3;background:#161b22}
+.tab .ts{font-size:10px;color:#6e7681}
+.hint{display:flex;align-items:center;margin-left:auto;font-size:11px;color:#6e7681;white-space:nowrap;padding-right:4px}
+.frame{border:none;width:100%;height:calc(100vh - 52px);margin-top:52px;display:none;background:#fff}
+.frame.active{display:block}
+</style>
+</head>
+<body>
+<header>
+<span class="brand">监控站</span>
+<!--TABS-->
+<span class="hint">离线单文件版 · 仅供个人研究</span>
+</header>
+<main>
+<!--FRAMES-->
+</main>
+<script>
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+    document.querySelectorAll('.frame').forEach(function(x){x.classList.remove('active')});
+    t.classList.add('active');
+    var f = document.getElementById('frame-' + t.dataset.f);
+    var lazy = f.getAttribute('data-srcdoc');
+    if (lazy) { f.srcdoc = lazy; f.removeAttribute('data-srcdoc'); }
+    f.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>'''
+
+
+def build_offline():
+    """离线单文件版 offline.html: 全部子页以 iframe srcdoc 内嵌, 下载后离线可用。
+    非首个 tab 懒加载(srcdoc 存在 data-srcdoc, 点击才赋值), 避免 7 页一起解析卡顿。"""
+    import html as _h
+    tab_btns = []
+    frames = []
+    first_done = False
+    for src, sname, fname, name, desc, variant in PAGES:
+        s = os.path.join(HERE, fname)  # 用 build_wave 已拷好+变体已注入的副本
+        if not os.path.exists(s):
+            continue
+        with open(s, 'r', encoding='utf-8') as f:
+            inner = f.read()
+        esc = _h.escape(inner, quote=True)
+        ts = datetime.datetime.fromtimestamp(os.path.getmtime(s)).strftime('%m-%d %H:%M')
+        btn = (f'<button class="tab active" data-f="{fname}" title="{desc}">'
+               f'{name}<span class="ts">{ts}</span></button>') if not first_done else \
+              (f'<button class="tab" data-f="{fname}" title="{desc}">'
+               f'{name}<span class="ts">{ts}</span></button>')
+        tab_btns.append(btn)
+        if not first_done:
+            frames.append(f'<iframe id="frame-{fname}" class="frame active" srcdoc="{esc}"></iframe>')
+            first_done = True
+        else:
+            # 懒加载: 大页(DI 2.3MB/公告 0.9MB)先不解析, 点 tab 再灌入
+            frames.append(f'<iframe id="frame-{fname}" class="frame" data-srcdoc="{esc}"></iframe>')
+    if not first_done:
+        print('!! 离线版无页面, 跳过')
+        return
+    out = (TPL_OFFLINE.replace('<!--TITLE-->', SITE_NAME)
+                       .replace('<!--TABS-->', '\n'.join(tab_btns))
+                       .replace('<!--FRAMES-->', '\n'.join(frames)))
+    with open(os.path.join(HERE, 'offline.html'), 'w', encoding='utf-8') as f:
+        f.write(out)
+    size_mb = os.path.getsize(os.path.join(HERE, 'offline.html')) / 1048576
+    print(f'offline.html (离线单文件版) 生成完毕 {size_mb:.1f} MB')
 
 
 TPL = '''<!DOCTYPE html>
@@ -169,6 +263,7 @@ def main():
             print(f'!! 缺源文件, 跳过: {s}')
 
     build_index()
+    build_offline()
 
     if check_only:
         print('\n[check 模式] 未 commit 未 push')

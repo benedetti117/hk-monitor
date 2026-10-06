@@ -2,7 +2,8 @@
 """
 监控站统一推送: build + 推飞书 + (有远端时)发布线上
 每天2次: wave1=07:50复盘完成后(6页齐), wave2=09:35回购完成后(补回购tab)
-单文件合并推送(见 push_site.py 头注): 发1条文字摘要 + 1个 index.html 文件
+推送: 发1条文字摘要(内含线上站直达链接, 飞书不能预览html附件, 文件推送已弃用);
+线上版为 iframe 多文件结构(index.html), 两者由同一次 build 产出。
 用法:
   python push_site.py 1      # wave1
   python push_site.py 2      # wave2
@@ -48,7 +49,11 @@ def build_wave(wave):
             publish.apply_ann_variant(os.path.join(HERE, fname), variant)
         lines.append(f'{name}: {stat_page(src, sname)}')
     publish.build_index()
+    publish.build_offline()   # 离线单文件版(供飞书推送下载)
     return lines
+
+
+SITE_URL = 'https://benedetti117.github.io/hk-monitor/'
 
 
 def wave_text(wave, lines):
@@ -56,16 +61,12 @@ def wave_text(wave, lines):
     now = datetime.datetime.now().strftime('%H:%M')
     return (f'🖥️ 监控站 {tag} {now}\n'
             + '\n'.join(lines)
-            + '\n\n📎 下一条消息是合并版 index.html(下载后浏览器打开;线上版已同步更新)')
+            + f'\n\n🔗 {SITE_URL}')
 
 
 def push_feishu_index(title_note=''):
-    """推合并版 index.html 文件消息 (--file 只允许 cwd 内相对路径)"""
-    ok, out = bridge.run_lark(['im', '+messages-send', '--as', 'bot',
-                               '--user-id', bridge.RECIPIENT_OU,
-                               '--file', 'index.html'], cwd=HERE)
-    print('HTML推送:', 'OK' if ok else out)
-    return ok
+    """(已弃用文件推送) 飞书不能预览html附件, 改为摘要内带线上链接, 本函数保留占位"""
+    return True
 
 
 def git_publish():
@@ -111,7 +112,7 @@ def main():
                                  '--user-id', bridge.RECIPIENT_OU,
                                  '--text', text])
     print('摘要推送:', 'OK' if ok1 else out1)
-    ok2 = push_feishu_index()
+    ok2 = push_feishu_index()   # 占位恒True(文件推送已弃用, 摘要内已带链接)
     ok3 = git_publish()
     return 0 if (ok1 and ok2) else 1
 
