@@ -60,10 +60,10 @@ def wave_text(wave, lines):
 
 
 def push_feishu_index(title_note=''):
-    """推合并版 index.html 文件消息"""
+    """推合并版 index.html 文件消息 (--file 只允许 cwd 内相对路径)"""
     ok, out = bridge.run_lark(['im', '+messages-send', '--as', 'bot',
                                '--user-id', bridge.RECIPIENT_OU,
-                               '--file', os.path.join(HERE, 'index.html')])
+                               '--file', 'index.html'], cwd=HERE)
     print('HTML推送:', 'OK' if ok else out)
     return ok
 
