@@ -80,14 +80,18 @@ def git_publish():
                 'git commit -m "auto: update ' + ts + '"'):
         rc, out = publish.run(cmd)
         print(f'$ {cmd} -> {out.strip().splitlines()[0] if out.strip() else "ok"}')
-    # push 网络易抖, 重试3次
+    # push 网络易抖, 重试3次(间隔递增10/30/60s)
     import time
+    waits = (10, 30, 60)
+    rc = 1
     for attempt in range(3):
         rc, out = publish.run('git push origin main')
         print(f'$ git push origin main -> {out.strip().splitlines()[0] if out.strip() else "ok"}')
         if rc == 0:
             break
-        time.sleep(10)
+        time.sleep(waits[attempt])
+    if rc != 0:
+        print('git push FAILED x3: 线上站未更新, 下一波push会自动补推本次提交')
     return rc == 0
 
 
@@ -114,7 +118,12 @@ def main():
     print('摘要推送:', 'OK' if ok1 else out1)
     ok2 = push_feishu_index()   # 占位恒True(文件推送已弃用, 摘要内已带链接)
     ok3 = git_publish()
-    return 0 if (ok1 and ok2) else 1
+    if not ok3:
+        bridge.run_lark(['im', '+messages-send', '--as', 'bot',
+                         '--user-id', bridge.RECIPIENT_OU,
+                         '--text', f'⚠️ 监控站 git push 失败(wave {wave}), 线上站暂未更新; '
+                                   f'下一波会自动补推。若早晚两波都报此错, 需按手册 curl --resolve 试IP换hosts'])
+    return 0 if (ok1 and ok2 and ok3) else 1
 
 
 if __name__ == '__main__':
