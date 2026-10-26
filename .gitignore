@@ -2,3 +2,4 @@ __pycache__/
 ghtmp/
 *.log
 offline.html
+state/

@@ -56,6 +56,20 @@ def build_wave(wave):
 SITE_URL = 'https://benedetti117.github.io/hk-monitor/'
 
 
+def state_file(wave, suffix):
+    """当日状态文件路径: state/wave_YYYYMMDD_{wave}{suffix}
+    补推循环(push_reconcile.py)据此判断 摘要是否已发/push是否成功"""
+    d = os.path.join(HERE, 'state')
+    os.makedirs(d, exist_ok=True)
+    day = datetime.datetime.now().strftime('%Y%m%d')
+    return os.path.join(d, f'wave_{day}_{wave}{suffix}')
+
+
+def mark(path):
+    """touch 一个空标记文件"""
+    open(path, 'w').close()
+
+
 def wave_text(wave, lines):
     tag = '🟦 早间版' if wave == 1 else '🟧 回购更新版'
     now = datetime.datetime.now().strftime('%H:%M')
@@ -112,12 +126,18 @@ def main():
         print('(dry 模式, 不推送不发布)')
         return 0
 
+    # 落盘摘要原文, 补推循环在漏发时据此重发
+    open(state_file(wave, '_text.txt'), 'w', encoding='utf-8').write(text)
+
     ok1, out1 = bridge.run_lark(['im', '+messages-send', '--as', 'bot',
                                  '--user-id', bridge.RECIPIENT_OU,
                                  '--text', text])
     print('摘要推送:', 'OK' if ok1 else out1)
+    if ok1:
+        mark(state_file(wave, '_sent.ok'))
     ok2 = push_feishu_index()   # 占位恒True(文件推送已弃用, 摘要内已带链接)
     ok3 = git_publish()
+    mark(state_file(wave, '_push.ok' if ok3 else '_push.fail'))
     if not ok3:
         bridge.run_lark(['im', '+messages-send', '--as', 'bot',
                          '--user-id', bridge.RECIPIENT_OU,
