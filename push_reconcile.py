@@ -40,9 +40,16 @@ def log(msg):
 
 
 def run(cmd):
-    p = subprocess.run(cmd, cwd=HERE, capture_output=True, text=True,
-                       shell=True, timeout=120)
-    return p.returncode, (p.stdout or '') + (p.stderr or '')
+    # 2026-10-27: 改为无shell直跑(列表参数)。此前 shell=True 下超时只能杀掉 cmd.exe,
+    # 被网络卡住的 git.exe 成为孤儿并握住管道, 子进程迟迟不返回 -> 一轮可远超10分钟,
+    # 被 ExecutionTimeLimit 强杀(rc=267014)且不留日志, 且 IgnoreNew 会把后续 tick 全堵住
+    # (10-27 晨 08:15-09:40 九个 tick 全缺即此症状)。直跑时超时杀的就是 git.exe 本体。
+    try:
+        p = subprocess.run(cmd, cwd=HERE, capture_output=True, text=True,
+                           timeout=90)
+        return p.returncode, (p.stdout or '') + (p.stderr or '')
+    except subprocess.TimeoutExpired:
+        return 124, 'timeout after 90s'
 
 
 def wave_in_flight():
@@ -89,7 +96,7 @@ def main():
     # 1) 补推(2次尝试, 间隔15s; rc==0 含 up-to-date)
     push_ok = False
     for attempt in (1, 2):
-        rc, out = run('git push origin main')
+        rc, out = run(['git', 'push', 'origin', 'main'])
         first = out.strip().splitlines()[0] if out.strip() else 'ok'
         log(f'push try{attempt} rc={rc}: {first[:120]}')
         if rc == 0:
