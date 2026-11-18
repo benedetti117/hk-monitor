@@ -26,7 +26,8 @@ PAGES = [
     (r'D:\AI research\hkex_short',         'index.html',     'short.html',   '沽空监控',     '港股自选池每日沽空占比+趋势图', None),
     (r'D:\AI research\hkex_ann',           'index.html',     'bb.html',      '回购速览',     '自选股回购公告速览(SRRPT)', 'bb'),
     (r'D:\AI research\hkex_unlock',        'index.html',     'unlock.html',  '解禁日程',     '港股解禁日期/金额/占比/股东,可排序+在线刷新价格', None),
-    (r'D:\AI research\cds_monitor',        'cds.html',       'cds.html',     '科技CDS',      '科技企业5Y CDS每日跟踪(Mag7/SpaceX与Neocloud拆图)', None),
+    # 2026-11-18 撤下: 兴证固收CDS日报仅微信群分发, 无自动取数通道, 数据源落地前不上线
+    # (r'D:\AI research\cds_monitor',        'cds.html',       'cds.html',     '科技CDS',      '科技企业5Y CDS每日跟踪(Mag7/SpaceX与Neocloud拆图)', None),
 ]
 
 SITE_NAME = '监控站'
