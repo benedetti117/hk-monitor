@@ -26,6 +26,7 @@ PAGES = [
     (r'D:\AI research\hkex_short',         'index.html',     'short.html',   '沽空监控',     '港股自选池每日沽空占比+趋势图', None),
     (r'D:\AI research\hkex_ann',           'index.html',     'bb.html',      '回购速览',     '自选股回购公告速览(SRRPT)', 'bb'),
     (r'D:\AI research\hkex_unlock',        'index.html',     'unlock.html',  '解禁日程',     '港股解禁日期/金额/占比/股东,可排序+在线刷新价格', None),
+    (r'D:\AI research\cds_monitor',        'cds.html',       'cds.html',     '科技CDS',      '科技企业5Y CDS每日跟踪(Mag7/SpaceX与Neocloud拆图)', None),
 ]
 
 SITE_NAME = '监控站'
@@ -276,20 +277,21 @@ def main():
         return
 
     ts = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-    steps = [
+    for cmd in [
         'git add -A',
-        'git diff --cached --quiet && echo NOTHING_TO_COMMIT',
         'git commit -m "auto: update ' + ts + '"',
         'git push origin main',
-    ]
-    for cmd in steps:
+    ]:
         rc, out = run(cmd)
         first = out.strip().splitlines()[0] if out.strip() else ''
         print(f'$ {cmd}\n  {first}')
-        if 'NOTHING_TO_COMMIT' in out:
-            print('无变更, 跳过 commit/push')
-            return
-        if rc != 0 and 'push' not in cmd:
+        if 'nothing to commit' in out:
+            print('无新变更, 仍尝试 push(补推未推commit)')
+            continue
+        if rc != 0 and 'push' in cmd:
+            print('!! push 失败(网络间歇阻断, 稍后推送任务自动补推)')
+            continue
+        if rc != 0:
             print(f'!! git 命令失败: {out[:300]}')
             sys.exit(1)
     print('发布完成')
