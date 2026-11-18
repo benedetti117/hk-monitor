@@ -30,7 +30,7 @@ PAGES = [
     # (r'D:\AI research\cds_monitor',        'cds.html',       'cds.html',     '科技CDS',      '科技企业5Y CDS每日跟踪(Mag7/SpaceX与Neocloud拆图)', None),
 ]
 
-SITE_NAME = '监控站'
+SITE_NAME = '投资看板'
 
 
 def run(cmd, **kw):
@@ -108,7 +108,7 @@ line-height:1.35;white-space:nowrap}
 </head>
 <body>
 <header>
-<span class="brand">监控站</span>
+<span class="brand">投资看板</span>
 <!--TABS-->
 <span class="hint">离线单文件版 · 仅供个人研究</span>
 </header>
@@ -196,7 +196,7 @@ line-height:1.35;white-space:nowrap}
 </head>
 <body>
 <header>
-<span class="brand">监控站</span>
+<span class="brand">投资看板</span>
 <!--TABS-->
 <span class="hint">每日 09:45 自动更新 · 仅供个人研究</span>
 </header>

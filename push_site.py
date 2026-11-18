@@ -73,7 +73,7 @@ def mark(path):
 def wave_text(wave, lines):
     tag = '🟦 早间版' if wave == 1 else '🟧 回购更新版'
     now = datetime.datetime.now().strftime('%H:%M')
-    return (f'🖥️ 监控站 {tag} {now}\n'
+    return (f'🖥️ 投资看板 {tag} {now}\n'
             + '\n'.join(lines)
             + f'\n\n🔗 {SITE_URL}')
 
@@ -141,7 +141,7 @@ def main():
     if not ok3:
         bridge.run_lark(['im', '+messages-send', '--as', 'bot',
                          '--user-id', bridge.RECIPIENT_OU,
-                         '--text', f'⚠️ 监控站 git push 失败(wave {wave}), 线上站暂未更新; '
+                         '--text', f'⚠️ 投资看板 git push 失败(wave {wave}), 线上站暂未更新; '
                                    f'下一波会自动补推。若早晚两波都报此错, 需按手册 curl --resolve 试IP换hosts'])
     return 0 if (ok1 and ok2 and ok3) else 1
 

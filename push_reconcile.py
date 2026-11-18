@@ -113,7 +113,7 @@ def main():
     hhmm = datetime.datetime.now().strftime('%H:%M')
     for w in ('1', '2'):
         if os.path.exists(sf(w, '_push.fail')) and not os.path.exists(sf(w, '_recovered.ok')):
-            if send(f'✅ 监控站补推成功({hhmm}), 线上已恢复最新, 请刷新查看\n{SITE_URL}'):
+            if send(f'✅ 投资看板补推成功({hhmm}), 线上已恢复最新, 请刷新查看\n{SITE_URL}'):
                 open(sf(w, '_recovered.ok'), 'w').close()
                 log(f'wave {w}: recovery notice sent')
 
